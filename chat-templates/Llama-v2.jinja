@@ -1,18 +1,23 @@
-{% if not add_generation_prompt is defined %}
-{% set add_generation_prompt = false %}
-{% endif %}
-{% for message in messages %}
-{% if message['role'] == 'user' %}
-{% if loop.index0 % 2 == 1 and loop.index0 > 2 %}
-{{ '<s>' + '[INST] ' + message['content'] + ' [/INST]' }}
-{% elif loop.index0 % 2 == 1 and loop.index0 < 2 %}
-{{ message['content'] + ' [/INST]' }}
-{% elif loop.index0 % 2 == 0 %}
-{{ '<s>' + '[INST] ' + message['content'] + ' [/INST]' }}
-{% endif %}
-{% elif message['role'] == 'system' %}
-{{ '<s>[INST] <<SYS>>\n' + message['content'] + '\n<</SYS>>\n\n' }}
-{% elif message['role'] == 'assistant' %}
-{{ ' '  + message['content'] + ' ' + '</s>' }}
-{% endif %}
-{% endfor %}
+{%- set ns = namespace(found=false) -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'system' -%}
+        {%- set ns.found = true -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- if not ns.found -%}
+    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\n\n' -}}
+{%- endif %}
+{%- for message in messages %}
+    {%- if message['role'] == 'system' -%}
+        {{- '' + message['content'] + '\n\n' -}}
+    {%- else -%}
+        {%- if message['role'] == 'user' -%}
+            {{-'### Instruction:\n' + message['content'] + '\n\n'-}}
+        {%- else -%}
+            {{-'### Response:\n' + message['content'] + '\n\n' -}}
+        {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- if add_generation_prompt -%}
+    {{-'### Response:\n'-}}
+{%- endif -%}
